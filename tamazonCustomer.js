@@ -16,9 +16,6 @@ let orderedQuantity = 0;
 
 function start() {
     let remainQuantity = 0;
-    if(!connection){
-        shopAgain();
-    }
 
     inquirer.prompt([{
             type: "input",
@@ -27,7 +24,6 @@ function start() {
             choices: listAllProductIDs()
         }])
         .then(function (answer1) {
-            console.log('answer1 ', answer1.productID)
             getProductInventory(answer1.productID);
             inquirer.prompt([{
                 type: "input",
@@ -35,11 +31,9 @@ function start() {
                 message: "Please enter quantity: "
             }]).then(function (answer2) {
                 orderedQuantity = answer2.quantity;
-                console.log('ordered quantity... ', orderedQuantity)
-                console.log(answer1.productID, answer2.quantity);
 
                 if (inventory <= 0) {
-                    console.log('the IF statement....')
+
                     inquirer.prompt([{
                         type: "list",
                         name: "productID",
@@ -50,33 +44,32 @@ function start() {
                             type: "input",
                             name: "quantity",
                             message: "Please enter quantity: ",
+                            choices: listAllProductIDs()
                         }]).then(function (answer2) {
                             remainQuantity = inventory - answer2.quantity;
                             submitOrder(answer1.productID, remainQuantity);
                         })
                     })
                 } else if (answer2.quantity > inventory) {
-                    console.log('the else if statement....')
                     inquirer.prompt([{
                         type: "input",
                         name: "quantity",
                         message: "Insufficient quantity! Lower your quantity: ",
-                        validate: function(res){
-                            if (answer2 > inventory){
+                        validate: function (res) {
+                            if (answer2 > inventory) {
                                 return false;
                             }
                             return true;
                         }
-                                
+
                     }]).then(function (answer2) {
                         remainQuantity = inventory - answer2.quantity;
                         submitOrder(answer1.productID, remainQuantity)
                     })
                 } else {
-                    console.log('the else statement....')
                     remainQuantity = inventory - answer2.quantity;
                     submitOrder(answer1.productID, remainQuantity)
-                
+
                 }
             })
         })
@@ -88,7 +81,7 @@ function submitOrder(itemId, itemQuantity) {
     connection.query("UPDATE products SET quantity = ? WHERE productId = ?", [itemQuantity, itemId], function (err, res) {
         if (err) throw err;
         getProductInfo(itemId, orderSummary, shopAgain);
-        
+
     });
 }
 let shopAgain = function () {
@@ -97,26 +90,25 @@ let shopAgain = function () {
         name: "choice",
         message: "Continue shopping?",
         choices: ["Yes", 'No']
-          
+
     }]).then(function (answer) {
         if (answer.choice.toLowerCase() === "yes") {
             start();
         }
-        if (answer.choice.toLowerCase() === "no"){
+        if (answer.choice.toLowerCase() === "no") {
             console.log('**** Thank you for shopping!!! ****');
             connection.end();
         }
     });
 }
-function getProductInventory(itemId) {
 
-    console.log('print from inside getProductInventory...productid ', itemId)
+function getProductInventory(itemId) {
     connection.query("SELECT quantity FROM products WHERE productId = ?", [itemId],
         function (err, res) {
             if (err) throw err;
             inventory = res[0].quantity;
             console.log('inventory....', inventory)
-            if (inventory <= 0){
+            if (inventory <= 0) {
                 console.log("Item is out of stock.  Select another product to purchase.")
                 start();
             }
@@ -137,7 +129,7 @@ function listAllProductIDs() {
 function logProducts(products) {
     products.forEach(product => {
         let total = product.price * orderedQuantity;
-            console.log(`
+        console.log(`
           Sale Summary:
           ==============================
           productID: ${product.productId}
@@ -147,14 +139,14 @@ function logProducts(products) {
           quantity: ${product.quantity}
           Total: ${'$'+ total}
         `)
-         
+
     })
 }
 
 function orderSummary(products) {
     products.forEach(product => {
         let total = product.price * orderedQuantity;
-            console.log(`
+        console.log(`
           Order Summary:
           ==============================
           Department: ${product.department}
@@ -164,7 +156,7 @@ function orderSummary(products) {
           Quantity: ${orderedQuantity}
           Total: ${'$'+ total}
         `)
-         
+
     })
 }
 
